@@ -51,9 +51,8 @@ SYSTEM_PROMPTS = {
     "Social Media Post Generator": "You are a social media manager. Create engaging posts for the specified platform, including relevant hashtags and a suitable tone.",
     "Email Campaign Writer": "You are an email marketing specialist. Write effective marketing emails with strong subject lines and clear calls-to-action.",
     "SEO Keyword Analyst": "You are an SEO expert. Generate relevant short-tail and long-tail keywords for the user's topic.",
-    "Content Improver": "You are an expert content editor. Rewrite and improve the user's text based on their stated goal (e.g., make it more persuasive, simplify it)."
-    "Digital Marketing Analyst": 
-
+    "Content Improver": "You are an expert content editor. Rewrite and improve the user's text based on their stated goal (e.g., make it more persuasive, simplify it).",
+    "Digital Marketing Analyst": "You are a digital marketing analyst. Your role is to analyze data, summarize reports, and provide actionable insights."
 }
 
 # --- Streamlit App ---
