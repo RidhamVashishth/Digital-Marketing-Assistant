@@ -1,6 +1,3 @@
-# ----------------------------------------------------------------------
-# FILE: app.py (Your main application file)
-# ----------------------------------------------------------------------
 import streamlit as st
 import os
 import google.generativeai as genai
@@ -24,6 +21,8 @@ try:
     genai.configure(api_key=api_key)
     # Model for text-based tasks
     text_model = genai.GenerativeModel('gemini-1.5-flash')
+    # Model for image generation tasks
+    image_model = genai.GenerativeModel('gemini-1.5-pro')
 except Exception as e:
     st.error(f"Error configuring the API: {e}")
     st.stop()
@@ -48,41 +47,25 @@ def extract_text_from_file(uploaded_file):
         return f"Error extracting text: {e}"
 
 def generate_image(prompt):
-    """Generates an image using the Imagen model."""
+    """Generates an image using a Gemini model that supports image generation."""
     try:
-        # Using a placeholder for project ID as it's often required for Vertex AI
-        project_id = os.getenv("GCP_PROJECT_ID", "your-gcp-project-id") 
-        # Note: The Bearer token for Vertex AI is typically short-lived and obtained via gcloud auth print-access-token
-        # For simplicity in Streamlit, ensure the API key has necessary permissions.
-        # A more robust solution might involve a service account.
-        url = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/imagen-3.0-generate-002:predict"
+        # The gemini-1.5-pro model can generate images directly.
+        response = image_model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "image/png"}
+        )
         
-        # This is a simplified auth header. For production, use gcloud auth or service accounts.
-        # In many environments, you might need to get a fresh token.
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+        # Extract image data from the response
+        if response and response.parts:
+            for part in response.parts:
+                if part.mime_type.startswith("image/"):
+                    image_data = part.inline_data.data
+                    return Image.open(io.BytesIO(image_data))
         
-        payload = {
-            "instances": [{"prompt": prompt}],
-            "parameters": {"sampleCount": 1}
-        }
-        
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        
-        data = response.json()
-        if "predictions" in data and data["predictions"]:
-            b64_string = data["predictions"][0]["bytesBase64Encoded"]
-            image_data = base64.b64decode(b64_string)
-            return Image.open(io.BytesIO(image_data))
-        else:
-            return "Failed to generate image. No predictions found."
-    except requests.exceptions.HTTPError as err:
-        return f"Error generating image: HTTP {err.response.status_code} - {err.response.text}"
+        return "Failed to generate image. The model did not return valid image data."
+
     except Exception as e:
-        return f"An unexpected error occurred during image generation: {e}"
+        return f"An error occurred during image generation: {e}"
 
 
 # --- System Prompts for Different Tools ---
@@ -213,7 +196,7 @@ if prompt := st.chat_input("What can I help you with today?"):
 
                 model_input = []
                 if "image" in user_message:
-                    model_input.append(user_image["image"])
+                    model_input.append(user_message["image"])
                 model_input.append("\n".join(full_prompt))
 
                 try:
