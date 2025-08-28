@@ -1,3 +1,6 @@
+# ----------------------------------------------------------------------
+# FILE: app.py (Your main application file)
+# ----------------------------------------------------------------------
 import streamlit as st
 import os
 import google.generativeai as genai
@@ -45,34 +48,47 @@ def extract_text_from_file(uploaded_file):
         return f"Error extracting text: {e}"
 
 def generate_image(prompt):
-    """Generates an image using Google's Imagen model via free Gemini API."""
+    """Generates an image using the Imagen model."""
     try:
-        # Use Imagen 3 if available, fallback to Gemini Flash
-        image_model = genai.GenerativeModel("imagen-3.0")  # free model via Gemini
-        response = image_model.generate_content(
-            prompt,
-            generation_config={"sample_count": 1},
-            stream=False
-        )
-
-        # Check response for image
-        if response and response.candidates:
-            for candidate in response.candidates:
-                if candidate.content and candidate.content.parts:
-                    for part in candidate.content.parts:
-                        if part.mime_type.startswith("image/"):
-                            image_data = part.data
-                            return Image.open(io.BytesIO(image_data))
-        return "Failed to generate image. No valid image returned."
-
+        # Using a placeholder for project ID as it's often required for Vertex AI
+        project_id = os.getenv("GCP_PROJECT_ID", "your-gcp-project-id") 
+        # Note: The Bearer token for Vertex AI is typically short-lived and obtained via gcloud auth print-access-token
+        # For simplicity in Streamlit, ensure the API key has necessary permissions.
+        # A more robust solution might involve a service account.
+        url = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/imagen-3.0-generate-002:predict"
+        
+        # This is a simplified auth header. For production, use gcloud auth or service accounts.
+        # In many environments, you might need to get a fresh token.
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "instances": [{"prompt": prompt}],
+            "parameters": {"sampleCount": 1}
+        }
+        
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
+        if "predictions" in data and data["predictions"]:
+            b64_string = data["predictions"][0]["bytesBase64Encoded"]
+            image_data = base64.b64decode(b64_string)
+            return Image.open(io.BytesIO(image_data))
+        else:
+            return "Failed to generate image. No predictions found."
+    except requests.exceptions.HTTPError as err:
+        return f"Error generating image: HTTP {err.response.status_code} - {err.response.text}"
     except Exception as e:
-        return f"Error generating image: {e}"
+        return f"An unexpected error occurred during image generation: {e}"
 
 
 # --- System Prompts for Different Tools ---
 SYSTEM_PROMPTS = {
     "General Assistant": "You are an expert helpful digital marketing assistant who loves to explain in detail.",
-    "Image Generator": "You are an AI image generation assistant. The user will provide a prompt describing an image they want to create.",
+    "Image Generator": "You are an expert image creator and social media expert. Your task is to generate images as per the user's request for platforms like Instagram, Facebook, and YouTube.",
     "Ad Copy Generator": "You are an expert copywriter. Your task is to create compelling ad copy based on the user's request. Focus on headlines, body text, and calls-to-action.",
     "Social Media Post Generator": "You are a social media manager. Create engaging posts for the specified platform, including relevant hashtags and a suitable tone.",
     "Email Campaign Writer": "You are an email marketing specialist. Write effective marketing emails with strong subject lines and clear calls-to-action.",
@@ -80,8 +96,7 @@ SYSTEM_PROMPTS = {
     "SEO Analyst": "You are an SEO expert. Generate relevant short-tail and long-tail keywords, analyze competitor strategies, and provide on-page SEO suggestions.",
     "Content Improver": "You are an expert content editor. Rewrite and improve the user's text based on their stated goal (e.g., make it more persuasive, simplify it).",
     "AI to Human Text Converter": "You are a skilled novel writer. Your task is to rewrite AI-generated text to sound more natural, engaging, and human-like. Focus on varying sentence structure, using more natural language, and adding a human touch.",
-    "Digital Marketing Analyst": "You are a digital marketing analyst. Your role is to analyze data, summarize reports, and provide actionable insights.", 
-    'AI Image Generator': 'You are an expert image creator and a social media expert, and know everything about instagram posts, facebook posts, stories, social media marketing, youtube marketing, and other social media platforms where pictures are uploaded. Your task is to generate images as per the user's request.'
+    "Digital Marketing Analyst": "You are a digital marketing analyst. Your role is to analyze data, summarize reports, and provide actionable insights."
 }
 
 # --- Streamlit App ---
@@ -198,7 +213,7 @@ if prompt := st.chat_input("What can I help you with today?"):
 
                 model_input = []
                 if "image" in user_message:
-                    model_input.append(user_message["image"])
+                    model_input.append(user_image["image"])
                 model_input.append("\n".join(full_prompt))
 
                 try:
