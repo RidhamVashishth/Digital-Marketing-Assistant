@@ -1,3 +1,6 @@
+# ----------------------------------------------------------------------
+# FILE: app.py (Your main application file)
+# ----------------------------------------------------------------------
 import streamlit as st
 import os
 import google.generativeai as genai
@@ -49,19 +52,22 @@ def extract_text_from_file(uploaded_file):
 def generate_image(prompt):
     """Generates an image using a Gemini model that supports image generation."""
     try:
-        # The gemini-1.5-pro model can generate images directly.
-        response = image_model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "image/png"}
-        )
+        # The prompt itself should instruct the model to generate an image.
+        generation_prompt = f"Generate a professional, high-quality image of: {prompt}"
+        
+        # Use a powerful model capable of image generation
+        response = image_model.generate_content(generation_prompt)
         
         # Extract image data from the response
         if response and response.parts:
             for part in response.parts:
-                if part.mime_type.startswith("image/"):
+                if part.mime_type and part.mime_type.startswith("image/"):
                     image_data = part.inline_data.data
                     return Image.open(io.BytesIO(image_data))
         
+        # Handle cases where the model returns text instead of an image (e.g., safety rejection)
+        if response.text:
+             return f"Failed to generate image. The model responded with text: {response.text}"
         return "Failed to generate image. The model did not return valid image data."
 
     except Exception as e:
