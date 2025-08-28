@@ -46,12 +46,14 @@ def extract_text_from_file(uploaded_file):
 
 # --- System Prompts for Different Tools ---
 SYSTEM_PROMPTS = {
-    "General Assistant": "You are a helpful digital marketing assistant.",
+    "General Assistant": "You are an expert helpful digital marketing assistant who loves to explain in detail.",
     "Ad Copy Generator": "You are an expert copywriter. Your task is to create compelling ad copy based on the user's request. Focus on headlines, body text, and calls-to-action.",
     "Social Media Post Generator": "You are a social media manager. Create engaging posts for the specified platform, including relevant hashtags and a suitable tone.",
     "Email Campaign Writer": "You are an email marketing specialist. Write effective marketing emails with strong subject lines and clear calls-to-action.",
-    "SEO Keyword Analyst": "You are an SEO expert. Generate relevant short-tail and long-tail keywords for the user's topic.",
+    "Blog Generator": "You are a professional blog writer. Your task is to generate a well-structured, SEO-friendly blog post based on the user's topic and keywords.",
+    "SEO Analyst": "You are an SEO expert. Generate relevant short-tail and long-tail keywords, analyze competitor strategies, and provide on-page SEO suggestions.",
     "Content Improver": "You are an expert content editor. Rewrite and improve the user's text based on their stated goal (e.g., make it more persuasive, simplify it).",
+    "AI to Human Text Converter": "You are a skilled novel writer. Your task is to rewrite AI-generated text to sound more natural, engaging, and human-like. Focus on varying sentence structure, using more natural language, and adding a human touch.",
     "Digital Marketing Analyst": "You are a digital marketing analyst. Your role is to analyze data, summarize reports, and provide actionable insights."
 }
 
@@ -171,3 +173,5 @@ if prompt := st.chat_input("What can I help you with today?"):
             
             st.markdown(response_text)
             st.session_state.messages.append({"role": "assistant", "content": response_text})
+
+
