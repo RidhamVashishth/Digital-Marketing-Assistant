@@ -1,6 +1,3 @@
-# ----------------------------------------------------------------------
-# FILE: app.py (Your main application file)
-# ----------------------------------------------------------------------
 import streamlit as st
 import os
 import google.generativeai as genai
@@ -61,6 +58,23 @@ SYSTEM_PROMPTS = {
 st.set_page_config(page_title="Marketing AI Chat", page_icon="🚀", layout="wide")
 
 st.title("🚀 AI Digital Marketing Assistant")
+
+# --- App Capabilities Summary ---
+with st.expander("See what this assistant can do for you"):
+    st.markdown("""
+    This AI-powered assistant is designed to help you with a wide range of digital marketing tasks. Select a tool from the sidebar to set the AI's persona and get started!
+
+    **Available Tools:**
+    - **General Assistant**: Get detailed explanations on any marketing topic.
+    - **Ad Copy Generator**: Create compelling ad copy for various platforms.
+    - **Social Media Post Generator**: Craft engaging posts tailored for different social channels.
+    - **Email Campaign Writer**: Write effective marketing emails from subject line to CTA.
+    - **Blog Generator**: Generate well-structured and SEO-friendly blog posts.
+    - **SEO Analyst**: Get keyword ideas, competitor analysis, and on-page SEO tips.
+    - **Content Improver**: Rewrite your existing text to be more persuasive, clear, or professional.
+    - **AI to Human Text Converter**: Make AI-generated text sound more natural and human-like.
+    - **Digital Marketing Analyst**: Analyze data and get actionable insights from your reports.
+    """)
 
 # --- Sidebar ---
 with st.sidebar:
@@ -173,5 +187,3 @@ if prompt := st.chat_input("What can I help you with today?"):
             
             st.markdown(response_text)
             st.session_state.messages.append({"role": "assistant", "content": response_text})
-
-
