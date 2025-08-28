@@ -60,7 +60,7 @@ st.set_page_config(page_title="Marketing AI Chat", page_icon="🚀", layout="wid
 st.title("🚀 AI Digital Marketing Assistant")
 
 # --- App Capabilities Summary ---
-with st.expander("See what this assistant can do for you"):
+with st.expander("Expand to see what our app has to offer"):
     st.markdown("""
     This AI-powered assistant is designed to help you with a wide range of digital marketing tasks. Select a tool from the sidebar to set the AI's persona and get started!
 
