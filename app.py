@@ -1,6 +1,4 @@
-# ----------------------------------------------------------------------
-# FILE: app.py (Your main application file)
-# ----------------------------------------------------------------------
+
 import streamlit as st
 import os
 import google.generativeai as genai
@@ -10,8 +8,6 @@ import docx
 import pptx
 import openpyxl
 import io
-import requests
-import base64
 
 # --- Configuration ---
 load_dotenv()
@@ -24,8 +20,6 @@ try:
     genai.configure(api_key=api_key)
     # Model for text-based tasks
     text_model = genai.GenerativeModel('gemini-1.5-flash')
-    # Model for image generation tasks
-    image_model = genai.GenerativeModel('gemini-1.5-pro')
 except Exception as e:
     st.error(f"Error configuring the API: {e}")
     st.stop()
@@ -49,35 +43,9 @@ def extract_text_from_file(uploaded_file):
     except Exception as e:
         return f"Error extracting text: {e}"
 
-def generate_image(prompt):
-    """Generates an image using a Gemini model that supports image generation."""
-    try:
-        # The prompt itself should instruct the model to generate an image.
-        generation_prompt = f"Generate a professional, high-quality image of: {prompt}"
-        
-        # Use a powerful model capable of image generation
-        response = image_model.generate_content(generation_prompt)
-        
-        # Extract image data from the response
-        if response and response.parts:
-            for part in response.parts:
-                if part.mime_type and part.mime_type.startswith("image/"):
-                    image_data = part.inline_data.data
-                    return Image.open(io.BytesIO(image_data))
-        
-        # Handle cases where the model returns text instead of an image (e.g., safety rejection)
-        if response.text:
-             return f"Failed to generate image. The model responded with text: {response.text}"
-        return "Failed to generate image. The model did not return valid image data."
-
-    except Exception as e:
-        return f"An error occurred during image generation: {e}"
-
-
 # --- System Prompts for Different Tools ---
 SYSTEM_PROMPTS = {
     "General Assistant": "You are an expert helpful digital marketing assistant who loves to explain in detail.",
-    "Image Generator": "You are an expert image creator and social media expert. Your task is to generate images as per the user's request for platforms like Instagram, Facebook, and YouTube.",
     "Ad Copy Generator": "You are an expert copywriter. Your task is to create compelling ad copy based on the user's request. Focus on headlines, body text, and calls-to-action.",
     "Social Media Post Generator": "You are a social media manager. Create engaging posts for the specified platform, including relevant hashtags and a suitable tone.",
     "Email Campaign Writer": "You are an email marketing specialist. Write effective marketing emails with strong subject lines and clear calls-to-action.",
@@ -100,7 +68,6 @@ with st.expander("See what this assistant can do for you"):
 
     **Available Tools:**
     - **General Assistant**: Get detailed explanations on any marketing topic.
-    - **Image Generator**: Create unique images from a text description.
     - **Ad Copy Generator**: Create compelling ad copy for various platforms.
     - **Social Media Post Generator**: Craft engaging posts tailored for different social channels.
     - **Email Campaign Writer**: Write effective marketing emails from subject line to CTA.
@@ -123,7 +90,7 @@ with st.sidebar:
     # File Uploader
     st.subheader("Upload a File")
     uploaded_file = st.file_uploader(
-        "Upload a file for context (not used for Image Generation).",
+        "Upload a file for context.",
         type=['png', 'jpg', 'jpeg', 'docx', 'pptx', 'xlsx', 'sql', 'wav', 'mp3', 'ogg']
     )
 
@@ -159,8 +126,6 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         if "image" in message:
             st.image(message["image"], width=200)
-        if "generated_image" in message:
-            st.image(message["generated_image"], caption="Generated Image")
         if "content" in message:
             st.markdown(message["content"])
 
@@ -168,7 +133,7 @@ for message in st.session_state.messages:
 if prompt := st.chat_input("What can I help you with today?"):
     user_message = {"role": "user", "content": prompt}
     
-    if uploaded_file is not None and selected_tool != "Image Generator":
+    if uploaded_file is not None:
         file_extension = os.path.splitext(uploaded_file.name)[1].lower()
         
         if file_extension in ['.png', '.jpg', '.jpeg']:
@@ -185,31 +150,22 @@ if prompt := st.chat_input("What can I help you with today?"):
     # --- Generate AI Response ---
     with st.chat_message("assistant"):
         with st.spinner("🤖 Thinking..."):
-            if selected_tool == "Image Generator":
-                generated_image = generate_image(prompt)
-                if isinstance(generated_image, Image.Image):
-                    st.image(generated_image, caption="Generated Image")
-                    st.session_state.messages.append({"role": "assistant", "generated_image": generated_image})
-                else:
-                    st.error(generated_image) # Display error message
-                    st.session_state.messages.append({"role": "assistant", "content": generated_image})
-            else:
-                # Text generation logic
-                full_prompt = [SYSTEM_PROMPTS[selected_tool]]
-                for msg in st.session_state.messages:
-                    if "content" in msg:
-                        full_prompt.append(f"{msg['role']}: {msg['content']}")
+            # Text generation logic
+            full_prompt = [SYSTEM_PROMPTS[selected_tool]]
+            for msg in st.session_state.messages:
+                if "content" in msg:
+                    full_prompt.append(f"{msg['role']}: {msg['content']}")
 
-                model_input = []
-                if "image" in user_message:
-                    model_input.append(user_message["image"])
-                model_input.append("\n".join(full_prompt))
+            model_input = []
+            if "image" in user_message:
+                model_input.append(user_message["image"])
+            model_input.append("\n".join(full_prompt))
 
-                try:
-                    response = text_model.generate_content(model_input)
-                    response_text = response.text
-                except Exception as e:
-                    response_text = f"Sorry, an error occurred: {e}"
-                
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "assistant", "content": response_text})
+            try:
+                response = text_model.generate_content(model_input)
+                response_text = response.text
+            except Exception as e:
+                response_text = f"Sorry, an error occurred: {e}"
+            
+            st.markdown(response_text)
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
