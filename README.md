@@ -1,6 +1,7 @@
 # **AI Digital Marketing Assistant**
 
 A versatile, chat-based digital marketing assistant powered by Google's Gemini AI and built with Streamlit. This interactive application provides a suite of specialized tools to automate, enhance, and streamline your marketing tasks.
+You can access the tool here: https://digital-marketing-assistant.streamlit.app/
 
 ## **Overview & Key Capabilities**
 
